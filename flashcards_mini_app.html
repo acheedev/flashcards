@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dev Flashcards – Extended Version</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- highlight.js -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/perl.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05070a;
+      --bg-alt: #101318;
+      --border: #2b3440;
+      --accent: #4ea1ff;
+      --accent-soft: rgba(78, 161, 255, 0.12);
+      --text: #e7ecf5;
+      --muted: #9aa4b5;
+      --danger: #ff5c5c;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: courier;
+      font-size: -1;
+      background: #05070a;
+      color: var(--text);
+    }
+    #app {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #0b0e13;
+      border-radius: 12px;
+      border: 1px solid #1f2530;
+    }
+    h1 { margin-top: 0; }
+
+    nav { display:flex; gap:10px; margin-bottom:16px; }
+    .tab-btn {
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+      border:1px solid #333;
+      background:#111;
+      font-size:13px;
+    }
+    .tab-btn.active {
+      background:#4ea1ff22;
+      border-color:#4ea1ff;
+      color:#4ea1ff;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 8px;
+      background:#080b10;
+      border:1px solid #2b3440;
+      color:var(--text);
+      border-radius:6px;
+      font-family:inherit;
+      font-size:11px;
+    }
+
+    /* Make these about 3x taller */
+    #questionCode,
+    #answerText,
+    #answerCode {
+      min-height: 180px;
+    }
+
+    button {
+      padding:6px 12px;
+      border-radius:20px;
+      border:1px solid #333;
+      background:#111;
+      color:var(--text);
+      cursor:pointer;
+      font-size:13px;
+    }
+    button.primary { background:var(--accent); color:#000; }
+    button.danger { background:#ff5c5c22; border-color:#ff5c5c; color:#ff5c5c; }
+
+    table { width:100%; border-collapse:collapse; margin-top:10px;}
+    td,th { border-bottom:1px solid #222; padding:6px; font-size:13px;}
+
+
+/* Base study block (you already had something like this) */
+.study-block {
+  padding: 12px;
+  background: #080b10;
+  border-radius: 8px;
+  border: 1px solid #333;
+  min-height: 120px;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.2;   /* NORMAL readable baseline */
+}
+
+/* Slightly tighter bullets/paragraphs, but not overlapping */
+#answer-section p,
+#answer-section li {
+  margin: 0;
+  padding: 0;
+  line-height: 0.8;    /* tighter than normal, but safe */
+}
+
+/* Let bare text & <br> inherit from .study-block */
+#answer-section {
+  margin: 0;
+  padding: 0;
+}
+
+/* Comfortable line-height for Answer Code only */
+#answer-section pre,
+#answer-section pre code {
+  line-height: 1.3;
+}
+
+/* Prevent big vertical gaps from <br> */
+#answer-section br {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+
+    pre {
+      background:#0c0f14;
+      padding:10px;
+      border-radius:6px;
+      border:1px solid #222;
+      overflow-x:auto;
+    }
+
+    .toolbar-row {
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+
+    .study-controls {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+      align-items:center;
+    }
+
+    .deck-filter-row {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+    }
+
+    .deck-filter-row select {
+      width:auto;
+      min-width:160px;
+    }
+
+    .deck-label {
+      font-size:12px;
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <h1>Dev Flashcards</h1>
+
+  <nav>
+    <button class="tab-btn active" data-tab="manage">Manage Cards</button>
+    <button class="tab-btn" data-tab="study">Study</button>
+  </nav>
+
+<section id="manage-section">
+  <h2>Create / Edit Card</h2>
+  <button id="return-to-study-btn" style="display:none; margin-bottom:8px;">
+    Return to Study
+  </button>
+
+    <form id="card-form">
+      <input type="hidden" id="card-id">
+
+      <label>Deck</label>
+      <input id="deckName" list="deck-list" placeholder="e.g. Bash, PL/SQL, Python" />
+      <datalist id="deck-list"></datalist>
+
+      <h3>Question</h3>
+      <label>Question Text</label>
+      <textarea id="questionText"></textarea>
+
+      <label>Question Code</label>
+      <textarea id="questionCode" placeholder="Optional code snippet"></textarea>
+
+      <label>Question Language</label>
+      <select id="languageQuestion">
+        <option value="python">python</option>
+        <option value="bash">bash</option>
+        <option value="sql">sql / plsql</option>
+        <option value="javascript">javascript</option>
+        <option value="perl">perl</option>
+        <option value="">(none)</option>
+      </select>
+
+      <h3>Answer</h3>
+      <label>Answer Text</label>
+      <textarea id="answerText"></textarea>
+
+      <label>Answer Code</label>
+      <textarea id="answerCode" placeholder="Optional code snippet"></textarea>
+
+      <label>Answer Language</label>
+      <select id="languageAnswer">
+        <option value="python">python</option>
+        <option value="bash">bash</option>
+        <option value="sql">sql / plsql</option>
+        <option value="javascript">javascript</option>
+        <option value="perl">perl</option>
+        <option value="">(none)</option>
+      </select>
+
+      <button class="primary" type="submit">Save</button>
+      <button type="button" id="reset-btn">Clear</button>
+    </form>
+
+    <div class="toolbar-row">
+      <button type="button" id="export-btn">Export JSON</button>
+      <button type="button" id="import-btn">Import JSON</button>
+      <input type="file" id="import-file" accept="application/json" style="display:none;">
+    </div>
+
+    <h2>Cards</h2>
+    <table>
+      <thead><tr><th>#</th><th>Deck</th><th>Question</th><th>Actions</th></tr></thead>
+      <tbody id="card-tbody"></tbody>
+    </table>
+
+    <h2>Decks</h2>
+    <table>
+      <thead><tr><th>Deck</th><th># Cards</th><th>Actions</th></tr></thead>
+      <tbody id="deck-tbody"></tbody>
+    </table>
+  </section>
+
+
+  <!-- ---------------- STUDY ---------------- -->
+  <section id="study-section" style="display:none">
+    <h2>Study</h2>
+
+    <div class="deck-filter-row">
+      <span class="deck-label">Deck filter:</span>
+      <select id="deckFilter">
+        <option value="">All decks</option>
+      </select>
+    </div>
+
+<div class="study-controls">
+  <button id="prev-btn">Previous</button>
+  <button id="show-answer-btn" class="primary">Show Answer</button>
+  <button id="next-btn">Next</button>
+  <button id="shuffle-btn">Shuffle</button>
+  <button id="mode-all-btn">All Cards</button>
+  <button id="mode-review-btn">Review Queue</button>
+  <button id="toggle-review-btn">Add to Review</button>
+  <button id="edit-current-btn">Edit This Card</button>
+  <span id="study-meta" class="deck-label"></span>
+</div>
+
+
+    <div class="study-block" id="study-block"></div>
+  </section>
+
+  <!-- Card Preview Modal -->
+  <div id="preview-modal" style="
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.7);
+      z-index:1000;
+      align-items:center;
+      justify-content:center;
+    ">
+    <div style="
+        background:#111827;
+        color:#e5e7eb;
+        padding:16px;
+        border-radius:8px;
+        max-width:900px;
+        width:90%;
+        max-height:80vh;
+        overflow:auto;
+        border:1px solid #374151;
+        box-shadow:0 10px 40px rgba(0,0,0,0.5);
+      ">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>Card Preview</strong>
+        <button id="preview-close-btn">Close</button>
+      </div>
+      <div id="preview-content"></div>
+    </div>
+  </div>
+</div> <!-- end #app -->
+
+
+<script>
+const STORAGE_KEY = "devFlashcards_extended_decks";
+
+let cards = [];
+let reviewQueue = []; // array of card IDs flagged for review
+let currentIndex = 0;
+let currentDeckFilter = ""; // "" = all decks
+let answerVisible = false;
+let studyMode = "all"; // "all" or "review"
+let currentCardId = null;
+let lastStudyState = null; // remembers where we were in Study when jumping to edit
+
+function loadCards() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    cards = [];
+    reviewQueue = [];
+    return;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // old format: just cards array
+      cards = parsed;
+      reviewQueue = [];
+    } else if (parsed && Array.isArray(parsed.cards)) {
+      cards = parsed.cards;
+      reviewQueue = Array.isArray(parsed.reviewQueue) ? parsed.reviewQueue : [];
+    } else {
+      cards = [];
+      reviewQueue = [];
+    }
+
+    // Normalize: ensure createdAt exists on all cards
+    const now = Date.now();
+    cards = cards.map((c, idx) => ({
+      ...c,
+      createdAt: typeof c.createdAt === "number" ? c.createdAt : (now + idx)
+    }));
+  } catch (e) {
+    console.error("Failed to parse storage", e);
+    cards = [];
+    reviewQueue = [];
+  }
+}
+
+function saveCards() {
+  const payload = {
+    cards,
+    reviewQueue,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  renderTable();
+  updateDeckUI();
+  renderDeckManager();
+}
+
+
+function nextId() {
+  return cards.length ? Math.max(...cards.map(c => c.id)) + 1 : 1;
+}
+
+function escapeHtml(str){
+  if(str == null) return "";
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function getDeckNames() {
+  const set = new Set();
+  cards.forEach(c => {
+    if (c.deck && c.deck.trim()) set.add(c.deck.trim());
+  });
+  // 2) Deck names are returned sorted alphabetically
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+}
+
+
+function updateDeckUI() {
+  // Datalist for Manage
+  const datalist = document.getElementById("deck-list");
+  if (datalist) {
+    datalist.innerHTML = "";
+    getDeckNames().forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      datalist.appendChild(opt);
+    });
+  }
+
+  // Deck filter select
+  const deckFilter = document.getElementById("deckFilter");
+  if (deckFilter) {
+    const currentValue = deckFilter.value;
+    deckFilter.innerHTML = `<option value="">All decks</option>`;
+    const names = getDeckNames();
+    names.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      deckFilter.appendChild(opt);
+    });
+    // restore selection if possible
+    if (currentValue && names.includes(currentValue)) {
+      deckFilter.value = currentValue;
+    } else {
+      if (!currentValue) deckFilter.value = "";
+      currentDeckFilter = deckFilter.value;
+    }
+  }
+}
+
+function getDeckStats() {
+  const map = new Map();
+  cards.forEach(c => {
+    const name = (c.deck || "").trim();
+    if (!name) return;
+    map.set(name, (map.get(name) || 0) + 1);
+  });
+  // return [deckName, count] pairs sorted by name
+  return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function renderDeckManager() {
+  const tbody = document.getElementById("deck-tbody");
+  if (!tbody) return;
+
+  const stats = getDeckStats();
+  if (!stats.length) {
+    tbody.innerHTML = `<tr><td colspan="3">No decks yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  stats.forEach(([name, count]) => {
+    const safeName = name.replace(/'/g, "\\'"); // escape for onclick
+    tbody.innerHTML += `
+      <tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${count}</td>
+        <td>
+          <button type="button" onclick="renameDeck('${safeName}')">
+            Rename
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+
+
+
+
+function getFilteredCards() {
+  if (!currentDeckFilter) return cards;
+  return cards.filter(c => (c.deck || "") === currentDeckFilter);
+}
+
+function getStudyCards() {
+  if (studyMode === "review") {
+    // Global review queue: ignore deck filter
+    return cards.filter(c => reviewQueue.includes(c.id));
+  }
+  // All-cards mode still respects the deck filter
+  return getFilteredCards();
+}
+
+
+function renderTable() {
+  const tbody = document.getElementById("card-tbody");
+  if (!tbody) return;
+
+  if (!cards.length) {
+    tbody.innerHTML = `<tr><td colspan="4">No cards yet.</td></tr>`;
+    return;
+  }
+
+  // Sort cards by Deck, then createdAt, then id
+  const sorted = [...cards].sort((a, b) => {
+    const da = (a.deck || "").localeCompare(b.deck || "");
+    if (da !== 0) return da;
+    const ta = typeof a.createdAt === "number" ? a.createdAt : 0;
+    const tb = typeof b.createdAt === "number" ? b.createdAt : 0;
+    if (ta !== tb) return ta - tb;
+    return (a.id || 0) - (b.id || 0);
+  });
+
+  let rows = "";
+  for (let i = 0; i < sorted.length; i++) {
+    const c = sorted[i];
+    rows += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(c.deck || "")}</td>
+        <td>${escapeHtml(c.questionText || "")}</td>
+        <td>
+          <button onclick="editCard(${c.id})">Edit</button>
+          <button class="danger" onclick="deleteCard(${c.id})">Delete</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = rows;
+}
+
+
+function editCard(id){
+  const c = cards.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById("card-id").value = c.id;
+  document.getElementById("deckName").value = c.deck || "";
+  document.getElementById("questionText").value = c.questionText || "";
+  document.getElementById("questionCode").value = c.questionCode || "";
+  document.getElementById("languageQuestion").value = c.languageQuestion || "";
+  document.getElementById("answerText").value = c.answerText || "";
+  document.getElementById("answerCode").value = c.answerCode || "";
+  document.getElementById("languageAnswer").value = c.languageAnswer || "";
+
+  // 3) Scroll to top when editing a card from bottom of the list
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renameDeck(oldName) {
+  const newName = prompt("New deck name:", oldName);
+  if (newName === null) return; // user cancelled
+
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed === oldName) return;
+
+  cards.forEach(c => {
+    if ((c.deck || "").trim() === oldName) {
+      c.deck = trimmed;
+    }
+  });
+
+  saveCards();          // will also refresh table + deck UI
+  renderDeckManager();  // refresh deck list
+  renderStudy();        // ensure the study view/filter picks up new name
+}
+
+
+function deleteCard(id){
+  if(!confirm("Delete this card?")) return;
+  cards = cards.filter(c=>c.id!==id);
+  reviewQueue = reviewQueue.filter(cardId => cardId !== id);
+  saveCards();
+  currentIndex = 0;
+  renderStudy();
+}
+
+// Card preview
+function previewCard(id){
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+
+  const modal   = document.getElementById("preview-modal");
+  const content = document.getElementById("preview-content");
+  if (!modal || !content) return;
+
+  let html = `<h3>Q: ${escapeHtml(c.questionText || "")}</h3>`;
+  if (c.questionCode && c.questionCode.trim()) {
+    html += `<pre><code class="language-${c.languageQuestion || ""}">${escapeHtml(c.questionCode)}</code></pre>`;
+  }
+
+  const answerHtml = (c.answerText || "").replace(/\n/g, "<br>");
+  html += `<h3 style="margin-top:1rem;">A:</h3>${answerHtml}`;
+  if (c.answerCode && c.answerCode.trim()) {
+    html += `<pre><code class="language-${c.languageAnswer || ""}">${escapeHtml(c.answerCode)}</code></pre>`;
+  }
+
+  content.innerHTML = html;
+  content.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+
+  modal.style.display = "flex";
+}
+
+// Preview modal close handlers
+(function initPreviewModal(){
+  const modal = document.getElementById("preview-modal");
+  const closeBtn = document.getElementById("preview-close-btn");
+  if (!modal || !closeBtn) return;
+
+  closeBtn.onclick = () => { modal.style.display = "none"; };
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+})();
+
+
+document.getElementById("reset-btn").onclick = ()=> {
+  // Clear card id and text/code fields, keep deck & language selections
+  document.getElementById("card-id").value="";
+  document.getElementById("questionText").value="";
+  document.getElementById("questionCode").value="";
+  document.getElementById("answerText").value="";
+  document.getElementById("answerCode").value="";
+};
+
+document.getElementById("card-form").onsubmit = e => {
+  e.preventDefault();
+
+  const idRaw = document.getElementById("card-id").value;
+  const deck = document.getElementById("deckName").value.trim();
+  const now = Date.now();
+  const data = {
+    id: idRaw ? Number(idRaw) : nextId(),
+    deck,
+    questionText: document.getElementById("questionText").value,
+    questionCode: document.getElementById("questionCode").value,
+    languageQuestion: document.getElementById("languageQuestion").value,
+    answerText: document.getElementById("answerText").value,
+    answerCode: document.getElementById("answerCode").value,
+    languageAnswer: document.getElementById("languageAnswer").value,
+    createdAt: now
+  };
+
+  if(!data.questionText && !data.questionCode){
+    alert("Give the card at least a question or some code.");
+    return;
+  }
+
+  const numericId = data.id;
+  const existingIndex = cards.findIndex(c => c.id === numericId);
+
+  if (idRaw && existingIndex !== -1) {
+    // Update existing card, preserve original createdAt if present
+    const old = cards[existingIndex];
+    cards[existingIndex] = {
+      ...data,
+      createdAt: typeof old.createdAt === "number" ? old.createdAt : now
+    };
+  } else {
+    // Ensure a fresh unique id for new card
+    data.id = nextId();
+    cards.push(data);
+  }
+
+  saveCards();
+
+  // Clear only id and text/code, keep deck and languages as-is
+  document.getElementById("card-id").value = "";
+  document.getElementById("questionText").value = "";
+  document.getElementById("questionCode").value = "";
+  document.getElementById("answerText").value = "";
+  document.getElementById("answerCode").value = "";
+
+  renderStudy();
+};
+
+function switchTab(tab){
+  document.getElementById("manage-section").style.display = tab==="manage"?"":"none";
+  document.getElementById("study-section").style.display = tab==="study"?"":"none";
+  if(tab==="study") renderStudy();
+}
+document.querySelectorAll(".tab-btn").forEach(b=>{
+  b.onclick = ()=> {
+    document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    switchTab(b.dataset.tab);
+  };
+});
+
+// Return to Study button (when we came from Study -> Edit)
+const returnToStudyBtn = document.getElementById("return-to-study-btn");
+if (returnToStudyBtn) {
+  returnToStudyBtn.onclick = () => {
+    // Set nav active to Study
+    document.querySelectorAll(".tab-btn").forEach(x => {
+      x.classList.toggle("active", x.dataset.tab === "study");
+    });
+
+    if (lastStudyState) {
+      studyMode = lastStudyState.studyMode || "all";
+      currentDeckFilter = lastStudyState.deckFilter || "";
+
+      const deckFilterSel = document.getElementById("deckFilter");
+      if (deckFilterSel) {
+        deckFilterSel.value = currentDeckFilter;
+      }
+
+      // Find the card again in the current study list
+      const studyCards = getStudyCards();
+      const idx = studyCards.findIndex(c => c.id === lastStudyState.cardId);
+      currentIndex = idx >= 0 ? idx : 0;
+    }
+
+    lastStudyState = null;
+    returnToStudyBtn.style.display = "none";
+    switchTab("study");
+  };
+}
+
+function renderStudy(){
+  const block = document.getElementById("study-block");
+  const meta = document.getElementById("study-meta");
+  const modeAllBtn = document.getElementById("mode-all-btn");
+  const modeReviewBtn = document.getElementById("mode-review-btn");
+  const toggleReviewBtn = document.getElementById("toggle-review-btn");
+  const editCurrentBtn = document.getElementById("edit-current-btn");
+
+const filteredBase = getFilteredCards();
+const studyCards = getStudyCards();
+// Global count of cards in the review queue
+const reviewCount = reviewQueue.length;
+
+
+  // Update mode button labels / styles
+  if (modeAllBtn) {
+    modeAllBtn.classList.toggle("primary", studyMode === "all");
+  }
+  if (modeReviewBtn) {
+    modeReviewBtn.textContent = `Review Queue (${reviewCount})`;
+    modeReviewBtn.classList.toggle("primary", studyMode === "review");
+  }
+
+  // No cards to show
+  if (!studyCards.length) {
+    currentCardId = null;
+
+    if (toggleReviewBtn) {
+      toggleReviewBtn.disabled = true;
+      toggleReviewBtn.textContent = "Add to Review";
+    }
+    if (editCurrentBtn) {
+      editCurrentBtn.disabled = true;
+    }
+
+  if (studyMode === "review") {
+    block.innerHTML = "No review cards yet.";
+  } else {
+    block.innerHTML = currentDeckFilter
+      ? `No cards in deck "${escapeHtml(currentDeckFilter)}".`
+      : "No cards yet.";
+  }
+
+
+    meta.textContent =
+      `Mode: ${studyMode === "review" ? "Review Queue" : "All Cards"} · Review flagged: ${reviewCount}`;
+    return;
+  }
+
+  // Clamp index
+  if (currentIndex < 0) currentIndex = 0;
+  if (currentIndex >= studyCards.length) currentIndex = studyCards.length - 1;
+
+  const c = studyCards[currentIndex];
+  currentCardId = c.id;
+  answerVisible = false;
+
+  if (toggleReviewBtn) {
+    toggleReviewBtn.disabled = false;
+    const inReview = reviewQueue.includes(c.id);
+    toggleReviewBtn.textContent = inReview ? "Remove from Review" : "Add to Review";
+  }
+  if (editCurrentBtn) {
+    editCurrentBtn.disabled = false;
+  }
+
+  let html = `<h3>Q: ${escapeHtml(c.questionText || "")}</h3>`;
+  if (c.questionCode && c.questionCode.trim()) {
+    html += `<pre><code class="language-${c.languageQuestion || ""}">${escapeHtml(c.questionCode)}</code></pre>`;
+  }
+
+  // Allow simple HTML in answerText (no escaping here)
+  const answerHtml = (c.answerText || "").replace(/\n/g, "<br>");
+
+  html += `<div id="answer-section" style="display:none;"><h3>A:</h3>${answerHtml}`;
+  if (c.answerCode && c.answerCode.trim()) {
+    html += `<pre><code class="language-${c.languageAnswer || ""}">${escapeHtml(c.answerCode)}</code></pre>`;
+  }
+  html += `</div>`;
+
+  block.innerHTML = html;
+
+  block.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+
+  meta.textContent =
+    `Mode: ${studyMode === "review" ? "Review Queue" : "All Cards"} · ` +
+    `Card ${currentIndex + 1} of ${studyCards.length} · Review flagged: ${reviewCount}` +
+    (c.deck ? ` · Deck: ${c.deck}` : "");
+}
+
+
+function showAnswer() {
+  const ans = document.getElementById("answer-section");
+  if(ans) {
+    ans.style.display="block";
+    answerVisible = true;
+  }
+}
+
+function nextCard() {
+  const studyCards = getStudyCards();
+  if(!studyCards.length) return;
+  currentIndex = (currentIndex+1) % studyCards.length;
+  renderStudy();
+}
+
+function prevCard() {
+  const studyCards = getStudyCards();
+  if(!studyCards.length) return;
+  currentIndex = (currentIndex-1+studyCards.length) % studyCards.length;
+  renderStudy();
+}
+
+document.getElementById("show-answer-btn").onclick = ()=> {
+  if(!answerVisible) {
+    showAnswer();
+  } else {
+    nextCard();
+  }
+};
+document.getElementById("next-btn").onclick = ()=> {
+  nextCard();
+};
+document.getElementById("prev-btn").onclick = ()=> {
+  prevCard();
+};
+
+document.getElementById("edit-current-btn").onclick = () => {
+  if (currentCardId == null) return;
+
+  // Remember where we were in Study
+  lastStudyState = {
+    studyMode,
+    deckFilter: currentDeckFilter,
+    cardId: currentCardId
+  };
+
+  // Highlight Manage tab
+  document.querySelectorAll(".tab-btn").forEach(x => {
+    x.classList.toggle("active", x.dataset.tab === "manage");
+  });
+
+  // Show Manage, load this card in the form
+  switchTab("manage");
+  editCard(currentCardId);
+
+  const backBtn = document.getElementById("return-to-study-btn");
+  if (backBtn) backBtn.style.display = "";
+};
+
+
+document.getElementById("shuffle-btn").onclick = ()=>{
+  if(!cards.length) return;
+
+  // Shuffle entire cards array (affects both modes)
+  for(let i=cards.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  currentIndex=0;
+  saveCards();
+  renderStudy();
+};
+
+// Study mode buttons
+document.getElementById("mode-all-btn").onclick = () => {
+  studyMode = "all";
+  currentIndex = 0;
+  renderStudy();
+};
+
+document.getElementById("mode-review-btn").onclick = () => {
+  studyMode = "review";
+  currentIndex = 0;
+  renderStudy();
+};
+
+document.getElementById("toggle-review-btn").onclick = () => {
+  if (currentCardId == null) return;
+  const idx = reviewQueue.indexOf(currentCardId);
+  if (idx === -1) {
+    reviewQueue.push(currentCardId);
+  } else {
+    reviewQueue.splice(idx, 1);
+  }
+  saveCards();
+  renderStudy();
+};
+
+// Deck filter change
+document.getElementById("deckFilter").addEventListener("change", (e)=>{
+  currentDeckFilter = e.target.value;
+  currentIndex = 0;
+  renderStudy();
+});
+
+// ---- Export / Import JSON ----
+// (Exports only cards, not reviewQueue, on purpose)
+document.getElementById("export-btn").onclick = () => {
+  const blob = new Blob([JSON.stringify(cards, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const date = new Date().toISOString().slice(0,10);
+  a.download = `dev-flashcards-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById("import-btn").onclick = () => {
+  document.getElementById("import-file").click();
+};
+
+document.getElementById("import-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!Array.isArray(data)) {
+        alert("Invalid backup file (expected an array).");
+        return;
+      }
+
+      // Let the user choose: OK = Replace, Cancel = Append
+      const replace = confirm(
+        "Import JSON:\n\nOK = Replace existing cards\nCancel = Append to existing cards"
+      );
+
+      const now = Date.now();
+
+      // Normalize imported cards (but don't assign IDs yet)
+      const normalized = data.map((c, idx) => ({
+        deck: c.deck || "",
+        questionText: c.questionText || "",
+        questionCode: c.questionCode || "",
+        languageQuestion: c.languageQuestion || "",
+        answerText: c.answerText || "",
+        answerCode: c.answerCode || "",
+        languageAnswer: c.languageAnswer || "",
+        createdAt: typeof c.createdAt === "number" ? c.createdAt : (now + idx)
+      }));
+
+      if (replace) {
+        // Replace existing cards completely
+        cards = normalized.map((c, idx) => ({
+          ...c,
+          id: typeof data[idx].id === "number" ? data[idx].id : idx + 1
+        }));
+        reviewQueue = [];
+        alert(`Imported ${cards.length} cards (replaced existing).`);
+      } else {
+        // Append to existing cards: assign fresh IDs after current max
+        const startId = nextId();
+        const appended = normalized.map((c, idx) => ({
+          ...c,
+          id: startId + idx
+        }));
+        cards = cards.concat(appended);
+        // keep reviewQueue as-is
+        alert(`Imported ${appended.length} cards (appended to existing).`);
+      }
+
+      saveCards();
+      currentIndex = 0;
+      renderStudy();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to parse backup JSON.");
+    }
+  };
+
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+
+// ---- Keyboard shortcuts ----
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "textarea" || tag === "input") return;
+
+  if (e.code === "Space") {
+    e.preventDefault();
+    const ans = document.getElementById("answer-section");
+    if (!answerVisible || (ans && ans.style.display === "none")) {
+      showAnswer();
+    } else {
+      nextCard();
+    }
+  } else if (e.code === "ArrowRight") {
+    e.preventDefault();
+    nextCard();
+  } else if (e.code === "ArrowLeft" || e.code === "Backspace") {
+    e.preventDefault();
+    prevCard();
+  }
+});
+
+// init
+// init
+loadCards();
+renderTable();
+updateDeckUI();
+renderDeckManager();
+renderStudy();
+
+
+</script>
+
+</body>
+</html>
